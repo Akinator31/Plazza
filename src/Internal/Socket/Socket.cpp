@@ -110,7 +110,11 @@ namespace Internal {
         return this->_fd;
     }
 
-    sockaddr_un& Socket::getSin() {
+    sockaddr_un& Socket::getSun() {
         return this->_socketConfig;
+    }
+
+    std::string Socket::getPath() const {
+        return this->_socketConfig.sun_path;
     }
 }
