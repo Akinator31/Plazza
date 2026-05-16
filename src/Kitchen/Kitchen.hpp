@@ -4,13 +4,26 @@
 
 #pragma once
 
-#define PID int
 #include "Internal/Process/Process.hpp"
+#include "Internal/IPC/IPC.hpp"
 
-class Kitchen {
+class KitchenHandle {
     Internal::Process _process;
+    Internal::IPC _ipc;
+    int currentLoad = 0;
 
 public:
-    Kitchen();
-    void close() const;
+    KitchenHandle(Internal::Process &&proc, Internal::Socket &&socket);
+
+    void close();
+
+    [[nodiscard]] int ipcFd() const;
+};
+
+class Kitchen {
+    Internal::IPC _ipc;
+
+public:
+    Kitchen(const std::string &socketPath, int nbCooks, int restock_timer);
+    void run();
 };
