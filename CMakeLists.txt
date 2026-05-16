@@ -21,4 +21,6 @@ add_executable(plazza src/main.cpp
         src/Reception/Commands.cpp
         src/Reception/Commands.hpp
         src/Utils/Utils.cpp
-        src/Utils/Utils.hpp)
+        src/Utils/Utils.hpp
+        src/Internal/IPC/IPC.cpp
+        src/Internal/IPC/IPC.hpp)
