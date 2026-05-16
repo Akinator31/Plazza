@@ -20,7 +20,10 @@ Reception::Reception(const int ac, char** av) {
         this->cook_per_chicken = std::stoi(av[2]);
         this->time_to_replace_ingredients = std::stoi(av[3]);
 
+        this->_serverSocket.bind({});
+        this->_serverSocket.listen();
         this->poller.add(STDIN_FILENO, POLLIN);
+        this->poller.add(this->_serverSocket.fd(), POLLIN);
 
     } catch ([[maybe_unused]] std::exception &e) {
         throw PlazzaException(IncorrectArgs);
@@ -28,7 +31,7 @@ Reception::Reception(const int ac, char** av) {
 }
 
 Reception::~Reception() {
-    for (const auto& kitchen : this->kitchens | std::views::values) {
+    for (auto& kitchen : this->kitchens | std::views::values) {
         kitchen.close();
     }
 }
@@ -50,6 +53,37 @@ void Reception::readIncomingCommand() {
 
         this->commandBuffer.append(buffer, bytesRead);
     }
+}
+
+void Reception::acceptNewKitchen() {
+    Internal::Socket accepted = this->_serverSocket.accept();
+
+    pid_t pid = _pendingKitchens.front();
+    this->_pendingKitchens.pop();
+
+    Internal::Process proc = this->_pendingPrecesses.at(pid);
+    this->_pendingPrecesses.erase(pid);
+
+    this->kitchens.emplace(pid, KitchenHandle(std::move(proc), std::move(accepted)));
+    this->poller.add(this->kitchens.at(pid).ipcFd(), POLLIN);
+}
+
+void Reception::spawnKitchen() {
+    Internal::Process proc;
+
+    if (proc.isChild()) {
+        Kitchen kitchen(this->_serverSocket.getPath(), this->cook_per_chicken, this->time_to_replace_ingredients);
+        kitchen.run();
+        exit(0);
+    }
+
+    pid_t pid = proc.pid();
+    this->_pendingKitchens.push(pid);
+    this->_pendingPrecesses.emplace(pid, proc);
+}
+
+void Reception::readKitchenMessages() {
+    // tkt
 }
 
 std::optional<std::string> Reception::nextCommand() {
@@ -81,6 +115,11 @@ void Reception::startCli() {
             }
             throw PlazzaException(PollError);
         }
+
+        if (this->poller.isReadable(this->_serverSocket.fd()))
+            acceptNewKitchen();
+
+        readKitchenMessages();
 
         readIncomingCommand();
 

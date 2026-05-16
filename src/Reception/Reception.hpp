@@ -7,6 +7,7 @@
 #include <functional>
 #include <map>
 #include <optional>
+#include <queue>
 #include <string>
 
 #include "Internal/Poller/Poller.hpp"
@@ -19,7 +20,10 @@ class Reception {
     int cook_per_chicken = 0;
     int time_to_replace_ingredients = 0;
 
-    std::map<PID, Kitchen> kitchens;
+    std::queue<pid_t>_pendingKitchens;
+    std::map<pid_t, Internal::Process> _pendingPrecesses;
+    std::map<pid_t, KitchenHandle> kitchens;
+    Internal::Socket _serverSocket;
     Internal::Poller poller;
     std::string commandBuffer;
 
@@ -31,6 +35,10 @@ public:
 
     void startCli();
     void readIncomingCommand();
+    void acceptNewKitchen();
+    void readKitchenMessages();
+    KitchenHandle& leastLoadedKitchen();
+    void spawnKitchen();
     std::optional<std::string> nextCommand();
     void handlePlazzaCommand(const std::string& command);
 };
