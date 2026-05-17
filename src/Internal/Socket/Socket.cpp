@@ -63,6 +63,7 @@ namespace Internal {
         const auto* castSocketConfig = reinterpret_cast<sockaddr*>(&socketConfig);
         constexpr socklen_t castSocketConfigSize = sizeof(socketConfig);
 
+        unlink(socketConfig.sun_path);
         if (::bind(this->_fd, castSocketConfig, castSocketConfigSize) == -1)
             throw PlazzaException(BindError);
 

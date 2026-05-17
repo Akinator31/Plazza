@@ -11,5 +11,5 @@ void Commands::status(Reception& reception, [[maybe_unused]] const std::string& 
 }
 
 void Commands::order(Reception& reception, std::string order) {
-    std::cout << "ORDER" << std::endl;
+    std::cout << "ORDER: " << order << std::endl;
 }

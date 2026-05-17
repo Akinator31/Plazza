@@ -17,3 +17,7 @@ std::string Utils::trim(const std::string& to_clean) {
         return trimmedString.substr(0, comments);
     return trimmedString;
 }
+
+Message Utils::parsePizzaOrder(std::string& order) {
+    
+}

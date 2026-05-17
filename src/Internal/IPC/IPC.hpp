@@ -4,8 +4,7 @@
 
 #pragma once
 #include "Internal/Socket/Socket.hpp"
-
-struct Message;
+#include "Pizzas.hpp"
 
 namespace Internal {
     class IPC {
@@ -16,7 +15,7 @@ namespace Internal {
 
         explicit IPC(const std::string &socketPath);
 
-        int fd() const;
+        [[nodiscard]] int fd() const;
 
         IPC& operator<<(const Message& msg);
 

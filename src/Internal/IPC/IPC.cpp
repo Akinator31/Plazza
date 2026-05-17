@@ -3,35 +3,8 @@
 //
 
 #include "IPC.hpp"
-
 #include "Errors/PlazzaErrors.hpp"
-
-enum class MessageType : uint8_t {
-    Order,
-    Done,
-    Status
-};
-
-enum PizzaType {
-    Regina = 1,
-    Margarita = 2,
-    Americana = 4,
-    Fantasia = 8,
-};
-
-enum PizzaSize {
-    S = 1,
-    M = 2,
-    L = 4,
-    XL = 8,
-    XXL = 16,
-};
-
-struct Message {
-    MessageType type;
-    PizzaType pizzaType;
-    PizzaSize pizzaSize;
-};
+#include "Pizzas.hpp"
 
 namespace Internal {
     IPC::IPC(Socket&& accepted) : _socket(std::move(accepted)) {}

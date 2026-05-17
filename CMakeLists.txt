@@ -3,7 +3,7 @@ project(plazza LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 
-include_directories(src)
+include_directories(src include)
 
 add_executable(plazza src/main.cpp
         src/Reception/Reception.hpp
@@ -23,4 +23,5 @@ add_executable(plazza src/main.cpp
         src/Utils/Utils.cpp
         src/Utils/Utils.hpp
         src/Internal/IPC/IPC.cpp
-        src/Internal/IPC/IPC.hpp)
+        src/Internal/IPC/IPC.hpp
+        include/Pizzas.hpp)
