@@ -30,4 +30,5 @@ struct Message {
     MessageType type;
     PizzaType pizzaType;
     PizzaSize pizzaSize;
+    uint8_t pizzaNumber;
 };
