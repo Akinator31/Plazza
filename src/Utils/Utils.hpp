@@ -9,5 +9,5 @@
 class Utils {
 public:
     static std::string trim(const std::string& to_clean);
-    static Message parsePizzaOrder(std::string &order);
+    static Message parsePizzaOrder(const std::string &order);
 };

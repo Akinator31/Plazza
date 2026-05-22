@@ -9,15 +9,27 @@
 
 class KitchenHandle {
     Internal::Process _process;
-    Internal::IPC _ipc;
-    int currentLoad = 0;
+    int _currentLoad = 0;
 
 public:
+    std::optional<Message> pendingMessages;
+    Internal::IPC ipc;
+
     KitchenHandle(Internal::Process &&proc, Internal::Socket &&socket);
 
-    void close();
+    [[nodiscard]] bool isSaturated(int nb_cooks) const;
+
+    [[nodiscard]] int load() const;
+
+    void sendOrder(const Message &order);
+
+    void notifyDone();
+
+    void close() const;
 
     [[nodiscard]] int ipcFd() const;
+
+    [[nodiscard]] pid_t pid() const;
 };
 
 class Kitchen {
@@ -26,4 +38,15 @@ class Kitchen {
 public:
     Kitchen(const std::string &socketPath, int nbCooks, int restock_timer);
     void run();
+};
+
+struct KitchenKey {
+    int    fd;
+    pid_t  pid;
+
+    bool operator<(const KitchenKey& other) const {
+        if (fd != other.fd)
+            return fd < other.fd;
+        return pid < other.pid;
+    }
 };
