@@ -10,8 +10,10 @@ namespace Internal {
     IPC::IPC(Socket&& accepted) : _socket(std::move(accepted)) {}
 
     IPC::IPC(const std::string& socketPath) {
-        if (_socket.connect(socketPath) == -1)
+        if (this->_socket.connect(socketPath) == -1)
             throw PlazzaException(ConnectError);
+
+        this->_poller.add(this->_socket.fd(), POLLIN);
     }
 
     int IPC::fd() const {
@@ -35,5 +37,11 @@ namespace Internal {
             totla += n;
         }
         return *this;
+    }
+
+    IPCStatus IPC::wait(const int timeout) {
+        if (const int ret = this->_poller.wait(timeout); ret == 0)
+            return TIMEOUT;
+        return OK;
     }
 }

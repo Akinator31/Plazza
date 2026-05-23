@@ -5,10 +5,17 @@
 #pragma once
 #include "Internal/Socket/Socket.hpp"
 #include "Pizzas.hpp"
+#include "Internal/Poller/Poller.hpp"
+
+enum IPCStatus {
+    TIMEOUT,
+    OK
+};
 
 namespace Internal {
     class IPC {
         Socket _socket;
+        Poller _poller;
 
     public:
         explicit IPC(Socket &&accepted);
@@ -20,5 +27,7 @@ namespace Internal {
         IPC& operator<<(const Message& msg);
 
         IPC& operator>>(Message& msg);
+
+        IPCStatus wait(int timeout);
     };
 }
