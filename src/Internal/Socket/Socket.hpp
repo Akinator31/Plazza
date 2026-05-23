@@ -116,6 +116,12 @@ namespace Internal {
          * @brief Gets the sockaddr_in struct of the socket.
          * @return The sockaddr_in.
          */
-        [[nodiscard]] sockaddr_un& getSin();
+        [[nodiscard]] sockaddr_un& getSun();
+
+        /**
+         * @brief Gets the path of the Unix socket;
+         * @return The path of the socket.
+         */
+        [[nodiscard]] std::string getPath() const;
     };
 }

@@ -9,5 +9,5 @@ class Commands {
 
 public:
     static void status(Reception &reception, const std::string&);
-    static void order(Reception &reception, std::string order);
+    static void order(Reception &reception, const std::string& order);
 };

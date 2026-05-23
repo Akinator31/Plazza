@@ -63,6 +63,7 @@ namespace Internal {
         const auto* castSocketConfig = reinterpret_cast<sockaddr*>(&socketConfig);
         constexpr socklen_t castSocketConfigSize = sizeof(socketConfig);
 
+        unlink(socketConfig.sun_path);
         if (::bind(this->_fd, castSocketConfig, castSocketConfigSize) == -1)
             throw PlazzaException(BindError);
 
@@ -110,7 +111,11 @@ namespace Internal {
         return this->_fd;
     }
 
-    sockaddr_un& Socket::getSin() {
+    sockaddr_un& Socket::getSun() {
         return this->_socketConfig;
+    }
+
+    std::string Socket::getPath() const {
+        return this->_socketConfig.sun_path;
     }
 }

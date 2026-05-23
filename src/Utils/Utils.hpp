@@ -4,8 +4,10 @@
 
 #pragma once
 #include <string>
+#include "Pizzas.hpp"
 
 class Utils {
 public:
     static std::string trim(const std::string& to_clean);
+    static Message parsePizzaOrder(const std::string &order);
 };

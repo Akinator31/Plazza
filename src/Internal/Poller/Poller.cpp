@@ -41,7 +41,11 @@ namespace Internal {
     }
 
     int Poller::wait(const int timeout) {
-        return poll(this->_pfds.data(), this->_pfds.size(), timeout);
+        const int ret = poll(this->_pfds.data(), this->_pfds.size(), timeout);
+
+        if (ret == -1 && errno == EINTR)
+            return 0;
+        return ret;
     }
 
     bool Poller::isReadable(const int fd) {

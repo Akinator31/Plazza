@@ -3,14 +3,19 @@
 //
 
 #pragma once
+#include <sched.h>
 
 namespace Internal {
     class Process {
-        int _pid;
+        pid_t _pid;
 
     public:
         explicit Process();
 
+        [[nodiscard]] bool isChild() const;
+        [[nodiscard]] bool isParent() const;
+        [[nodiscard]] pid_t pid() const;
         void kill() const;
+        void wait() const;
     };
 }

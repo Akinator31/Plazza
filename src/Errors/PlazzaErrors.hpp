@@ -15,6 +15,9 @@ enum PlazzaErrorTypes {
     BindError,
     ListenError,
     AcceptError,
+    ConnectError,
+    IPCReadError,
+    PizzaOrderError,
 };
 
 class PlazzaException : public std::exception {
@@ -25,7 +28,10 @@ class PlazzaException : public std::exception {
         {SocketCreationError, "An error occurred while creating a socket!"},
         {BindError, "An error occurred while binding the reception socket!"},
         {ListenError, "An error occurred while listening the reception socket!"},
-        {AcceptError, "An error occurred while accepting connection on the reception socket!"}
+        {AcceptError, "An error occurred while accepting connection on the reception socket!"},
+        {ConnectError, "An error occurred while connecting to the reception socket!"},
+        {IPCReadError, "An error occurred while reading an IPC!"},
+        {PizzaOrderError, "Incorrect pizza order!"}
     };
 
     std::string _error;
