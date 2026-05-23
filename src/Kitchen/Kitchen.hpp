@@ -38,6 +38,7 @@ class Kitchen {
 public:
     Kitchen(const std::string &socketPath, int nbCooks, int restock_timer);
     void run();
+    void handleReceptionCommand(Message &order);
 };
 
 struct KitchenKey {

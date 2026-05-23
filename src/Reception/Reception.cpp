@@ -117,6 +117,7 @@ void Reception::readKitchenMessages(const pid_t pid) {
     this->kitchens.at(pid).ipc >> extracted;
     if (extracted.type == MessageType::Done) {
         std::cout << "Pizza terminé" << std::endl;
+        this->kitchens.at(pid).notifyDone();
     }
 }
 

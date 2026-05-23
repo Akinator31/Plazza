@@ -43,20 +43,22 @@ Kitchen::Kitchen(const std::string &socketPath, int nbCooks, int restock_timer)
     : _ipc(socketPath) {
 }
 
+void Kitchen::handleReceptionCommand(Message &message) {
+
+}
+
 void Kitchen::run() {
-    std::this_thread::sleep_for(std::chrono::seconds(10));
-    std::cout << "I ended the pizza" << std::endl;
+    while (true) {
+        IPCStatus ret = this->_ipc.wait(5000);
 
-    Message msg1{};
-    Message msg2{};
+        if (ret == TIMEOUT) {
+            std::cout << "Timeout reached! Closing the kitchen." << std::endl;
+            break;
+        }
 
-    this->_ipc >> msg1;
-    this->_ipc >> msg2;
+        Message receivedCommand{};
+        this->_ipc >> receivedCommand;
 
-    this->_ipc << Message {
-        .type = MessageType::Done
-    };
-
-    std::this_thread::sleep_for(std::chrono::seconds(10));
-    std::cout << "I gonna die now " << static_cast<int>(msg1.type) << " " << static_cast<int>(msg2.type) << std::endl;
+        this->handleReceptionCommand(receivedCommand);
+    }
 }
