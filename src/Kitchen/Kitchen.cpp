@@ -41,6 +41,17 @@ pid_t KitchenHandle::pid() const {
 
 Kitchen::Kitchen(const std::string &socketPath, int nbCooks, int restock_timer)
     : _ipc(socketPath) {
+    _stock = {
+        {IngredientType::Dough, 5},
+        {IngredientType::Tomato, 5},
+        {IngredientType::Gruyere, 5},
+        {IngredientType::Ham, 5},
+        {IngredientType::Mushrooms, 5},
+        {IngredientType::Steak, 5},
+        {IngredientType::Eggplant, 5},
+        {IngredientType::GoatCheese, 5},
+        {IngredientType::ChiefLove, 5}
+    };
 }
 
 void Kitchen::handleReceptionCommand(Message &message) {

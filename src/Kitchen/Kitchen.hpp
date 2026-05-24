@@ -10,11 +10,6 @@
 #include <array>
 
 
-struct PizzaOrder {
-    PizzaSize pizzaSize;
-    PizzaType pizzaType;
-};
-
 class KitchenHandle {
     Internal::Process _process;
     int _currentLoad = 0;
@@ -44,6 +39,7 @@ class Kitchen {
     Internal::IPC _ipc;
     std::array<Cooker *, 3> _cookers;
     std::vector<PizzaOrder> _orders;
+    Stock _stock;
 
 public:
     Kitchen(const std::string &socketPath, int nbCooks, int restock_timer);
