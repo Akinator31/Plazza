@@ -6,6 +6,14 @@
 
 #include "Internal/Process/Process.hpp"
 #include "Internal/IPC/IPC.hpp"
+#include "Kitchen/Cooker/Cooker.hpp"
+#include <array>
+
+
+struct PizzaOrder {
+    PizzaSize pizzaSize;
+    PizzaType pizzaType;
+};
 
 class KitchenHandle {
     Internal::Process _process;
@@ -34,6 +42,8 @@ public:
 
 class Kitchen {
     Internal::IPC _ipc;
+    std::array<Cooker *, 3> _cookers;
+    std::vector<PizzaOrder> _orders;
 
 public:
     Kitchen(const std::string &socketPath, int nbCooks, int restock_timer);
