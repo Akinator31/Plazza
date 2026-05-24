@@ -57,8 +57,10 @@ Kitchen::Kitchen(const std::string &socketPath, int nbCooks, int restock_timer)
 void Kitchen::handleReceptionCommand(Message &message) {
     PizzaRecipe recipe = pizzaRecipes[message.pizzaType];
 
+    _pizzaQueueMutex.lock();
     for (auto nb_pizza = 0; nb_pizza < message.pizzaNumber; nb_pizza++)
-        this->_orders.push_back(recipe);
+        this->_pizzaQueue.push_back(recipe);
+    _pizzaQueueMutex.unlock();
 }
 
 void Kitchen::run() {

@@ -57,13 +57,20 @@ struct PizzaOrder {
     PizzaType type;
 };
 
+using Stock = std::map<IngredientType, int>;
+
 struct PizzaRecipe {
     PizzaType type;
     std::vector<Ingredient> ingredients;
     uint32_t cookingTime;
+    bool hasEnoughIngredients(const Stock &stock) const {
+        for (const auto &ingredient : ingredients) {
+            if (stock.find(ingredient.type) == stock.end() || stock.at(ingredient.type) < ingredient.quantity)
+                return false;
+        }
+        return true;
+    }
 };
-
-using Stock = std::map<IngredientType, int>;
 
 const std::vector<PizzaRecipe> pizzaRecipes = {
     {
