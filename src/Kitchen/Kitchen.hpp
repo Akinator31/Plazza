@@ -38,7 +38,7 @@ public:
 class Kitchen {
     Internal::IPC _ipc;
     std::array<Cooker *, 3> _cookers;
-    std::vector<PizzaOrder> _orders;
+    std::vector<PizzaRecipe> _pizzaQueue;
     Stock _stock;
 
 public:
