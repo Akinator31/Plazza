@@ -11,6 +11,11 @@ Thread::~Thread() {
         pthread_detach(_thread);
 }
 
+void *Thread::_trampoline(void *arg) {
+    static_cast<Thread *>(arg)->_fn();
+    return nullptr;
+}
+
 void Thread::start() {
     if (_started)
         throw std::runtime_error("Thread: already started");
