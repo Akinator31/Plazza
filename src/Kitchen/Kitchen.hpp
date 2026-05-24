@@ -7,8 +7,11 @@
 #include "Internal/Process/Process.hpp"
 #include "Internal/IPC/IPC.hpp"
 #include "Kitchen/Cooker/Cooker.hpp"
+#include "Pizzas.hpp"
+#include "Mutex/Mutex.hpp"
 #include <array>
 
+class Cooker;
 
 class KitchenHandle {
     Internal::Process _process;
@@ -37,14 +40,18 @@ public:
 
 class Kitchen {
     Internal::IPC _ipc;
-    std::array<Cooker *, 3> _cookers;
-    std::vector<PizzaRecipe> _pizzaQueue;
-    Stock _stock;
 
 public:
     Kitchen(const std::string &socketPath, int nbCooks, int restock_timer);
     void run();
     void handleReceptionCommand(Message &order);
+    std::array<Cooker *, 3> _cookers;
+    std::vector<PizzaRecipe> _pizzaQueue;
+    Stock _stock;
+    Mutex _stockMutex;
+    Mutex _pizzaQueueMutex;
+    Semaphore _pizzaQueueSemaphore;
+    uint _multiplier = 1;
 };
 
 struct KitchenKey {
