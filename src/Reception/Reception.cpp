@@ -100,7 +100,12 @@ void Reception::spawnKitchen() {
     Internal::Process proc;
 
     if (proc.isChild()) {
-        Kitchen kitchen(this->_serverSocket.getPath(), this->cook_per_chicken, this->time_to_replace_ingredients);
+        Kitchen kitchen(
+            this->_serverSocket.getPath(),
+            this->cook_per_chicken,
+            this->time_to_replace_ingredients,
+            this->cooking_time_multiplier
+        );
         kitchen.run();
         exit(0);
     }
