@@ -3,25 +3,24 @@ project(plazza LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 
-include_directories(src include)
-
-add_executable(plazza src/main.cpp
-        src/Reception/Reception.hpp
+add_executable(plazza
+        src/main.cpp
         src/Reception/Reception.cpp
-        src/Errors/PlazzaErrors.hpp
-        src/Errors/PlazzaErrors.cpp
-        src/Kitchen/Kitchen.hpp
-        src/Kitchen/Kitchen.cpp
-        src/Internal/Process/Process.cpp
-        src/Internal/Process/Process.hpp
-        src/Internal/Poller/Poller.cpp
-        src/Internal/Poller/Poller.hpp
-        src/Internal/Socket/Socket.cpp
-        src/Internal/Socket/Socket.hpp
         src/Reception/Commands.cpp
-        src/Reception/Commands.hpp
+        src/Errors/PlazzaErrors.cpp
+        src/Kitchen/Kitchen.cpp
+        src/Kitchen/Cooker/Cooker.cpp
+        src/Internal/Process/Process.cpp
+        src/Internal/Poller/Poller.cpp
+        src/Internal/Socket/Socket.cpp
         src/Utils/Utils.cpp
-        src/Utils/Utils.hpp
         src/Internal/IPC/IPC.cpp
-        src/Internal/IPC/IPC.hpp
+        src/Thread/Thread.cpp
+        src/Mutex/Mutex.cpp
+        src/Semaphore/Semaphore.cpp
         include/Pizzas.hpp)
+
+target_include_directories(plazza PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
