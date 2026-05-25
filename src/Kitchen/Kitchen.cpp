@@ -3,9 +3,9 @@
 //
 
 #include "Kitchen.hpp"
-
-#include <iostream>
-#include <bits/this_thread_sleep.h>
+#include "Thread/Thread.hpp"
+#include <thread>
+#include <chrono>
 
 KitchenHandle::KitchenHandle(Internal::Process&& proc, Internal::Socket&& socket)
     : _process(proc), pendingMessages(std::nullopt), ipc(std::move(socket)) {}
@@ -39,8 +39,8 @@ pid_t KitchenHandle::pid() const {
     return this->_process.pid();
 }
 
-Kitchen::Kitchen(const std::string &socketPath, int nbCooks, int restock_timer)
-    : _ipc(socketPath) {
+Kitchen::Kitchen(const std::string &socketPath, int nbCooks, int restockTimer, float multiplier)
+    : _ipc(socketPath), _nbCooks(nbCooks), _restockTimer(restockTimer), _multiplier(multiplier) {
     _stock = {
         {IngredientType::Dough, 5},
         {IngredientType::Tomato, 5},
@@ -55,26 +55,93 @@ Kitchen::Kitchen(const std::string &socketPath, int nbCooks, int restock_timer)
 }
 
 void Kitchen::handleReceptionCommand(Message &message) {
-    PizzaRecipe recipe = pizzaRecipes[message.pizzaType];
+    if (message.type != MessageType::Order)
+        return;
+
+    const PizzaRecipe *recipe = nullptr;
+    
+    for (const auto &r : pizzaRecipes) {
+        if (r.type == message.pizzaType) {
+            recipe = &r;
+            break;
+        }
+    }
+    if (!recipe)
+        return;
 
     _pizzaQueueMutex.lock();
-    for (auto nb_pizza = 0; nb_pizza < message.pizzaNumber; nb_pizza++)
-        this->_pizzaQueue.push_back(recipe);
+    _busyMutex.lock();
+    const int capacity = 2 * _nbCooks;
+    const int current = static_cast<int>(_pizzaQueue.size()) + _busyCooks;
+    int accepted = message.pizzaNumber;
+    if (current + accepted > capacity)
+        accepted = std::max(0, capacity - current);
+    for (int i = 0; i < accepted; i++)
+        _pizzaQueue.push_back(*recipe);
+    _busyMutex.unlock();
     _pizzaQueueMutex.unlock();
+
+    for (int i = 0; i < accepted; i++)
+        _pizzaQueueSemaphore.post();
+    _activityMutex.lock();
+    _lastActivity = std::chrono::steady_clock::now();
+    _activityMutex.unlock();
+}
+
+void Kitchen::restockLoop() {
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(_restockTimer));
+        _stockMutex.lock();
+        for (auto &[type, qty] : _stock)
+            qty++;
+        _stockMutex.unlock();
+    }
+}
+
+bool Kitchen::shouldClose() {
+    _busyMutex.lock();
+    const int busy = _busyCooks;
+    _busyMutex.unlock();
+    if (busy > 0)
+        return false;
+
+    _pizzaQueueMutex.lock();
+    const bool emptyQueue = _pizzaQueue.empty();
+    _pizzaQueueMutex.unlock();
+    if (!emptyQueue)
+        return false;
+
+    _activityMutex.lock();
+    const auto last = _lastActivity;
+    _activityMutex.unlock();
+    return std::chrono::steady_clock::now() - last > std::chrono::seconds(5);
 }
 
 void Kitchen::run() {
-    while (true) {
-        IPCStatus ret = this->_ipc.wait(5000);
+    _lastActivity = std::chrono::steady_clock::now();
 
-        if (ret == TIMEOUT) {
-            std::cout << "Timeout reached! Closing the kitchen." << std::endl;
-            break;
+    for (int i = 0; i < _nbCooks; i++) {
+        _cookers.push_back(std::make_unique<Cooker>(this));
+        _cookers.back()->start();
+    }
+
+    Thread restockThread([this] { this->restockLoop(); });
+    restockThread.start();
+
+    while (true) {
+        const IPCStatus ret = _ipc.wait(1000);
+
+        if (ret == OK) {
+            Message receivedCommand{};
+            try {
+                _ipc >> receivedCommand;
+            } catch (...) {
+                break;
+            }
+            handleReceptionCommand(receivedCommand);
         }
 
-        Message receivedCommand{};
-        this->_ipc >> receivedCommand;
-
-        this->handleReceptionCommand(receivedCommand);
+        if (shouldClose())
+            break;
     }
 }

@@ -9,7 +9,10 @@
 #include "Kitchen/Cooker/Cooker.hpp"
 #include "Pizzas.hpp"
 #include "Mutex/Mutex.hpp"
-#include <array>
+#include "Semaphore/Semaphore.hpp"
+#include <chrono>
+#include <memory>
+#include <vector>
 
 class Cooker;
 
@@ -39,19 +42,30 @@ public:
 };
 
 class Kitchen {
+public:
     Internal::IPC _ipc;
 
-public:
-    Kitchen(const std::string &socketPath, int nbCooks, int restock_timer);
+    Kitchen(const std::string &socketPath, int nbCooks, int restockTimer, float multiplier);
+
     void run();
     void handleReceptionCommand(Message &order);
-    std::array<Cooker *, 3> _cookers;
+    void restockLoop();
+    bool shouldClose();
+
+    std::vector<std::unique_ptr<Cooker>> _cookers;
     std::vector<PizzaRecipe> _pizzaQueue;
     Stock _stock;
     Mutex _stockMutex;
     Mutex _pizzaQueueMutex;
     Semaphore _pizzaQueueSemaphore;
-    uint _multiplier = 1;
+    Mutex _ipcMutex;
+    Mutex _busyMutex;
+    Mutex _activityMutex;
+    int _busyCooks = 0;
+    int _nbCooks;
+    int _restockTimer;
+    float _multiplier;
+    std::chrono::steady_clock::time_point _lastActivity;
 };
 
 struct KitchenKey {
