@@ -4,51 +4,72 @@
 #include <chrono>
 #include <thread>
 
-static void removeIngredients(Stock &stock, const std::vector<Ingredient> &ingredients) {
-    for (const auto &ingredient : ingredients) {
-        if (stock.find(ingredient.type) != stock.end()) {
-            stock[ingredient.type] -= ingredient.quantity;
-        }
-    }
+Cooker::Cooker(Kitchen *kitchen) : _kitchen(kitchen) {
+    _thread = std::make_unique<Thread>([this] { this->run(); });
 }
 
-void *Cooker::run(void *arg) {
-    Cooker *cooker = static_cast<Cooker *>(arg);
-    Semaphore &timeToWork = cooker->_kitchen->_pizzaQueueSemaphore;
-    Mutex &pizzaQueueMutex = cooker->_kitchen->_pizzaQueueMutex;
-    Mutex &stockMutex = cooker->_kitchen->_stockMutex;
-    PizzaRecipe pizza;
+void Cooker::start() {
+    _thread->start();
+}
 
-    auto hasEnoughIngredients = [](const Stock &stock, const std::vector<Ingredient> &ingredients) {
-        for (const auto &ingredient : ingredients) {
-            const auto it = stock.find(ingredient.type);
-            if (it == stock.end() || it->second < ingredient.quantity)
-                return false;
-        }
-        return true;
-    };
+static bool handleIngredients(Kitchen &k, const PizzaRecipe &pizza) {
+    if (!pizza.hasEnoughIngredients(k._stock)) {
+        k._stockMutex.unlock();
+        k._pizzaQueueMutex.lock();
+        k._pizzaQueue.insert(k._pizzaQueue.begin(), pizza);
+        k._pizzaQueueMutex.unlock();
+        k._pizzaQueueSemaphore.post();
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        return false;
+    }
+    for (const auto &ing : pizza.ingredients)
+        k._stock[ing.type] -= ing.quantity;
+    return true;
+}
+
+void Cooker::run() {
+    Kitchen &k = *_kitchen;
 
     while (true) {
-        timeToWork.wait();
-        pizzaQueueMutex.lock();
-        if (cooker->_kitchen->_pizzaQueue.empty()) {
-            pizzaQueueMutex.unlock();
+        k._pizzaQueueSemaphore.wait();
+        k._pizzaQueueMutex.lock();
+        if (k._pizzaQueue.empty()) {
+            k._pizzaQueueMutex.unlock();
+            std::this_thread::yield();
             continue;
         }
-        pizza = cooker->_kitchen->_pizzaQueue.back();
-        cooker->_kitchen->_pizzaQueue.pop_back();
-        stockMutex.lock();
-        if (!hasEnoughIngredients(cooker->_kitchen->_stock, pizza.ingredients)) {
-            stockMutex.unlock();
-            cooker->_kitchen->_pizzaQueue.push_back(pizza);
-            pizzaQueueMutex.unlock();
+        PizzaRecipe pizza = k._pizzaQueue.back();
+
+        k._pizzaQueue.pop_back();
+        k._pizzaQueueMutex.unlock();
+
+        k._stockMutex.lock();
+        if (!handleIngredients(k, pizza)) {
+            k._stockMutex.unlock();
             continue;
         }
-        removeIngredients(cooker->_kitchen->_stock, pizza.ingredients);
-        stockMutex.unlock();
-        pizzaQueueMutex.unlock();
-        std::this_thread::sleep_for(std::chrono::seconds(
-            pizza.cookingTime * cooker->_kitchen->_multiplier));
+        k._stockMutex.unlock();
+
+        k._busyMutex.lock();
+        k._busyCooks++;
+        k._busyMutex.unlock();
+
+        auto cookMs = static_cast<long>(
+            static_cast<float>(pizza.cookingTime) * 1000.0f * k._multiplier);
+        std::this_thread::sleep_for(std::chrono::milliseconds(cookMs));
+
+        Message done{MessageType::Done, pizza.type, PizzaSize::S, 1};
+
+        k._ipcMutex.lock();
+        k._ipc << done;
+        k._ipcMutex.unlock();
+
+        k._busyMutex.lock();
+        k._busyCooks--;
+        k._busyMutex.unlock();
+
+        k._activityMutex.lock();
+        k._lastActivity = std::chrono::steady_clock::now();
+        k._activityMutex.unlock();
     }
-    return nullptr;
 }

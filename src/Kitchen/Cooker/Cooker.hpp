@@ -1,15 +1,16 @@
 #pragma once
+#include <memory>
 #include "Thread/Thread.hpp"
-#include "Semaphore/Semaphore.hpp"
-#include "Mutex/Mutex.hpp"
 
 class Kitchen;
 
 class Cooker {
-    Thread _thread;
     Kitchen *_kitchen;
+    std::unique_ptr<Thread> _thread;
+
 public:
-    Cooker();
-    ~Cooker();
-    static void *run(void *arg);
+    Cooker(Kitchen *kitchen);
+
+    void start();
+    void run();
 };
