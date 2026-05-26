@@ -55,6 +55,27 @@ Kitchen::Kitchen(const std::string &socketPath, int nbCooks, int restockTimer, f
 }
 
 void Kitchen::handleReceptionCommand(Message &message) {
+    if (message.type == MessageType::Status) {
+        KitchenStatus status{};
+
+        _busyMutex.lock();
+        status.busyCooks = _busyCooks;
+        _busyMutex.unlock();
+        status.totalCooks = _nbCooks;
+
+        _stockMutex.lock();
+        for (const auto &[type, qty] : _stock)
+            status.stock[static_cast<int>(type)] = qty;
+        _stockMutex.unlock();
+
+        Message header{MessageType::Status, {}, {}, 0};
+        _ipcMutex.lock();
+        _ipc << header;
+        _ipc << status;
+        _ipcMutex.unlock();
+        return;
+    }
+
     if (message.type != MessageType::Order)
         return;
 
