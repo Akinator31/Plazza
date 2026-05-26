@@ -116,6 +116,14 @@ void Reception::spawnKitchen() {
     std::cout << "Kitchen spawned !" << std::endl;
 }
 
+static const char *ingredientName(const int index) {
+    static const char *names[INGREDIENT_COUNT] = {
+        "Dough", "Tomato", "Gruyere", "Ham", "Mushrooms",
+        "Steak", "Eggplant", "GoatCheese", "ChiefLove"
+    };
+    return names[index];
+}
+
 void Reception::readKitchenMessages(const pid_t pid) {
     Message extracted{};
 
@@ -123,6 +131,14 @@ void Reception::readKitchenMessages(const pid_t pid) {
     if (extracted.type == MessageType::Done) {
         std::cout << "Pizza terminé" << std::endl;
         this->kitchens.at(pid).notifyDone();
+    } else if (extracted.type == MessageType::Status) {
+        KitchenStatus status{};
+        this->kitchens.at(pid).ipc >> status;
+        std::cout << "Kitchen [PID " << pid << "]:\n";
+        std::cout << "  Cooks : " << status.busyCooks << "/" << status.totalCooks << " busy\n";
+        std::cout << "  Stock :\n";
+        for (int i = 0; i < INGREDIENT_COUNT; i++)
+            std::cout << "    " << ingredientName(i) << ": " << status.stock[i] << "\n";
     }
 }
 
@@ -174,6 +190,16 @@ void Reception::removeClosedKitchen(const int fd, const pid_t pid) {
 
 void Reception::enqueueOrder(const Message& order) {
     _pendingOrders.push(order);
+}
+
+void Reception::broadcastStatus() {
+    if (this->kitchens.empty()) {
+        std::cout << "No kitchen running." << std::endl;
+        return;
+    }
+    const Message statusMsg{MessageType::Status, {}, {}, 0};
+    for (auto &kitchen : this->kitchens | std::views::values)
+        kitchen.ipc << statusMsg;
 }
 
 void Reception::startCli() {

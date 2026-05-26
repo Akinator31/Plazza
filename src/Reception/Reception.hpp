@@ -46,4 +46,5 @@ public:
     void handlePlazzaCommand(const std::string& command);
     void removeClosedKitchen(int fd, pid_t pid);
     void enqueueOrder(const Message& order);
+    void broadcastStatus();
 };
