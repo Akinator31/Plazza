@@ -145,10 +145,10 @@ std::optional<std::string> Reception::nextCommand() {
     return Utils::trim(command);
 }
 
-KitchenHandle* Reception::leastLoadedKitchen() {
+KitchenHandle *Reception::leastLoadedKitchen() {
     KitchenHandle *leastKitchen = nullptr;
 
-    for (auto& kitchen : this->kitchens | std::views::values) {
+    for (auto &kitchen : this->kitchens | std::views::values) {
         if (kitchen.isSaturated(this->cook_per_chicken))
             continue;
         if (!leastKitchen || kitchen.load() < leastKitchen->load()) {
@@ -156,17 +156,14 @@ KitchenHandle* Reception::leastLoadedKitchen() {
         }
     }
 
-    if (!this->_pendingKitchens.empty() || !this->_pendingPrecesses.empty()) {
-        std::cout << "Y'a des kitchens qui attendent de se co" << std::endl;
-        return nullptr;
-    }
+    if (leastKitchen)
+        return leastKitchen;
 
-    if (!leastKitchen && this->_pendingKitchens.empty() && this->_pendingPrecesses.empty()) {
-        this->spawnKitchen();
+    if (!this->_pendingKitchens.empty() || !this->_pendingPrecesses.empty())
         return nullptr;
-    }
 
-    return leastKitchen;
+    this->spawnKitchen();
+    return nullptr;
 }
 
 void Reception::removeClosedKitchen(const int fd, const pid_t pid) {

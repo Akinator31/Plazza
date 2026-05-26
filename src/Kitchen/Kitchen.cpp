@@ -3,7 +3,7 @@
 //
 
 #include "Kitchen.hpp"
-#include "Thread/Thread.hpp"
+#include "Internal/Thread/Thread.hpp"
 #include <thread>
 #include <chrono>
 
@@ -125,7 +125,7 @@ void Kitchen::run() {
         _cookers.back()->start();
     }
 
-    Thread restockThread([this] { this->restockLoop(); });
+    Internal::Thread restockThread([this] { this->restockLoop(); });
     restockThread.start();
 
     while (true) {

@@ -8,8 +8,8 @@
 #include "Internal/IPC/IPC.hpp"
 #include "Kitchen/Cooker/Cooker.hpp"
 #include "Pizzas.hpp"
-#include "Mutex/Mutex.hpp"
-#include "Semaphore/Semaphore.hpp"
+#include "Internal/Mutex/Mutex.hpp"
+#include "Internal/Semaphore/Semaphore.hpp"
 #include <chrono>
 #include <memory>
 #include <vector>
@@ -55,12 +55,12 @@ public:
     std::vector<std::unique_ptr<Cooker>> _cookers;
     std::vector<PizzaRecipe> _pizzaQueue;
     Stock _stock;
-    Mutex _stockMutex;
-    Mutex _pizzaQueueMutex;
-    Semaphore _pizzaQueueSemaphore;
-    Mutex _ipcMutex;
-    Mutex _busyMutex;
-    Mutex _activityMutex;
+    Internal::Mutex _stockMutex;
+    Internal::Mutex _pizzaQueueMutex;
+    Internal::Semaphore _pizzaQueueSemaphore;
+    Internal::Mutex _ipcMutex;
+    Internal::Mutex _busyMutex;
+    Internal::Mutex _activityMutex;
     int _busyCooks = 0;
     int _nbCooks;
     int _restockTimer;

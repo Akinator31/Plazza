@@ -15,9 +15,9 @@ add_executable(plazza
         src/Internal/Socket/Socket.cpp
         src/Utils/Utils.cpp
         src/Internal/IPC/IPC.cpp
-        src/Thread/Thread.cpp
-        src/Mutex/Mutex.cpp
-        src/Semaphore/Semaphore.cpp
+        src/Internal/Thread/Thread.cpp
+        src/Internal/Mutex/Mutex.cpp
+        src/Internal/Semaphore/Semaphore.cpp
         include/Pizzas.hpp)
 
 target_include_directories(plazza PRIVATE

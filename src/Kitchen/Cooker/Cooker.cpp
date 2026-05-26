@@ -5,7 +5,7 @@
 #include <thread>
 
 Cooker::Cooker(Kitchen *kitchen) : _kitchen(kitchen) {
-    _thread = std::make_unique<Thread>([this] { this->run(); });
+    _thread = std::make_unique<Internal::Thread>([this] { this->run(); });
 }
 
 void Cooker::start() {
