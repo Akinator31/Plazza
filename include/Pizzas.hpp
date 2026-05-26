@@ -72,6 +72,14 @@ struct PizzaRecipe {
     }
 };
 
+constexpr int INGREDIENT_COUNT = 9;
+
+struct KitchenStatus {
+    int busyCooks;
+    int totalCooks;
+    int stock[INGREDIENT_COUNT];
+};
+
 const std::vector<PizzaRecipe> pizzaRecipes = {
     {
         PizzaType::Margarita,
