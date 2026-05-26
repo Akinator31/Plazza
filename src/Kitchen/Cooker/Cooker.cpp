@@ -5,7 +5,7 @@
 #include <thread>
 
 Cooker::Cooker(Kitchen *kitchen) : _kitchen(kitchen) {
-    _thread = std::make_unique<Thread>([this] { this->run(); });
+    _thread = std::make_unique<Internal::Thread>([this] { this->run(); });
 }
 
 void Cooker::start() {
@@ -58,7 +58,7 @@ void Cooker::run() {
             static_cast<float>(pizza.cookingTime) * 1000.0f * k._multiplier);
         std::this_thread::sleep_for(std::chrono::milliseconds(cookMs));
 
-        Message done{MessageType::Done, pizza.type, PizzaSize::S, 1};
+        Message done{MessageType::Done, pizza.type, PizzaSize::S, 1, pizza.orderId};
 
         k._ipcMutex.lock();
         k._ipc << done;

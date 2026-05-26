@@ -3,7 +3,7 @@
 //
 
 #include "Kitchen.hpp"
-#include "Thread/Thread.hpp"
+#include "Internal/Thread/Thread.hpp"
 #include <thread>
 #include <chrono>
 
@@ -55,6 +55,27 @@ Kitchen::Kitchen(const std::string &socketPath, int nbCooks, int restockTimer, f
 }
 
 void Kitchen::handleReceptionCommand(Message &message) {
+    if (message.type == MessageType::Status) {
+        KitchenStatus status{};
+
+        _busyMutex.lock();
+        status.busyCooks = _busyCooks;
+        _busyMutex.unlock();
+        status.totalCooks = _nbCooks;
+
+        _stockMutex.lock();
+        for (const auto &[type, qty] : _stock)
+            status.stock[static_cast<int>(type)] = qty;
+        _stockMutex.unlock();
+
+        Message header{MessageType::Status, {}, {}, 0};
+        _ipcMutex.lock();
+        _ipc << header;
+        _ipc << status;
+        _ipcMutex.unlock();
+        return;
+    }
+
     if (message.type != MessageType::Order)
         return;
 
@@ -76,8 +97,11 @@ void Kitchen::handleReceptionCommand(Message &message) {
     int accepted = message.pizzaNumber;
     if (current + accepted > capacity)
         accepted = std::max(0, capacity - current);
-    for (int i = 0; i < accepted; i++)
-        _pizzaQueue.push_back(*recipe);
+    for (int i = 0; i < accepted; i++) {
+        PizzaRecipe r = *recipe;
+        r.orderId = message.orderId;
+        _pizzaQueue.push_back(r);
+    }
     _busyMutex.unlock();
     _pizzaQueueMutex.unlock();
 
@@ -125,7 +149,7 @@ void Kitchen::run() {
         _cookers.back()->start();
     }
 
-    Thread restockThread([this] { this->restockLoop(); });
+    Internal::Thread restockThread([this] { this->restockLoop(); });
     restockThread.start();
 
     while (true) {

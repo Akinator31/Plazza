@@ -116,13 +116,36 @@ void Reception::spawnKitchen() {
     std::cout << "Kitchen spawned !" << std::endl;
 }
 
+static const char *ingredientName(const int index) {
+    static const char *names[INGREDIENT_COUNT] = {
+        "Dough", "Tomato", "Gruyere", "Ham", "Mushrooms",
+        "Steak", "Eggplant", "GoatCheese", "ChiefLove"
+    };
+    return names[index];
+}
+
 void Reception::readKitchenMessages(const pid_t pid) {
     Message extracted{};
 
     this->kitchens.at(pid).ipc >> extracted;
     if (extracted.type == MessageType::Done) {
-        std::cout << "Pizza terminé" << std::endl;
         this->kitchens.at(pid).notifyDone();
+        auto it = _orderTracking.find(extracted.orderId);
+        if (it != _orderTracking.end()) {
+            it->second.remaining--;
+            if (it->second.remaining <= 0) {
+                std::cout << "Order complete: " << it->second.description << std::endl;
+                _orderTracking.erase(it);
+            }
+        }
+    } else if (extracted.type == MessageType::Status) {
+        KitchenStatus status{};
+        this->kitchens.at(pid).ipc >> status;
+        std::cout << "Kitchen [PID " << pid << "]:\n";
+        std::cout << "  Cooks : " << status.busyCooks << "/" << status.totalCooks << " busy\n";
+        std::cout << "  Stock :\n";
+        for (int i = 0; i < INGREDIENT_COUNT; i++)
+            std::cout << "    " << ingredientName(i) << ": " << status.stock[i] << "\n";
     }
 }
 
@@ -145,10 +168,10 @@ std::optional<std::string> Reception::nextCommand() {
     return Utils::trim(command);
 }
 
-KitchenHandle* Reception::leastLoadedKitchen() {
+KitchenHandle *Reception::leastLoadedKitchen() {
     KitchenHandle *leastKitchen = nullptr;
 
-    for (auto& kitchen : this->kitchens | std::views::values) {
+    for (auto &kitchen : this->kitchens | std::views::values) {
         if (kitchen.isSaturated(this->cook_per_chicken))
             continue;
         if (!leastKitchen || kitchen.load() < leastKitchen->load()) {
@@ -156,17 +179,14 @@ KitchenHandle* Reception::leastLoadedKitchen() {
         }
     }
 
-    if (!this->_pendingKitchens.empty() || !this->_pendingPrecesses.empty()) {
-        std::cout << "Y'a des kitchens qui attendent de se co" << std::endl;
-        return nullptr;
-    }
+    if (leastKitchen)
+        return leastKitchen;
 
-    if (!leastKitchen && this->_pendingKitchens.empty() && this->_pendingPrecesses.empty()) {
-        this->spawnKitchen();
+    if (!this->_pendingKitchens.empty() || !this->_pendingPrecesses.empty())
         return nullptr;
-    }
 
-    return leastKitchen;
+    this->spawnKitchen();
+    return nullptr;
 }
 
 void Reception::removeClosedKitchen(const int fd, const pid_t pid) {
@@ -177,6 +197,22 @@ void Reception::removeClosedKitchen(const int fd, const pid_t pid) {
 
 void Reception::enqueueOrder(const Message& order) {
     _pendingOrders.push(order);
+}
+
+uint32_t Reception::createOrder(const std::string& description, const int count) {
+    const uint32_t id = _nextOrderId++;
+    _orderTracking[id] = {description, count};
+    return id;
+}
+
+void Reception::broadcastStatus() {
+    if (this->kitchens.empty()) {
+        std::cout << "No kitchen running." << std::endl;
+        return;
+    }
+    const Message statusMsg{MessageType::Status, {}, {}, 0};
+    for (auto &kitchen : this->kitchens | std::views::values)
+        kitchen.ipc << statusMsg;
 }
 
 void Reception::startCli() {

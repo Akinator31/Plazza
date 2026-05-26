@@ -20,25 +20,6 @@ namespace Internal {
         return this->_socket.fd();
     }
 
-    IPC& IPC::operator<<(const Message& msg) {
-        this->_socket.write(reinterpret_cast<const char *>(&msg), sizeof(msg));
-        return *this;
-    }
-
-    IPC& IPC::operator>>(Message& msg) {
-        ssize_t totla = 0;
-        constexpr ssize_t expected = sizeof(msg);
-        const auto buf = reinterpret_cast<char *>(&msg);
-
-        while (totla < expected) {
-            ssize_t n = this->_socket.read(buf + totla, expected - totla);
-            if (n <= 0)
-                throw PlazzaException(IPCReadError);
-            totla += n;
-        }
-        return *this;
-    }
-
     IPCStatus IPC::wait(const int timeout) {
         if (const int ret = this->_poller.wait(timeout); ret == 0)
             return TIMEOUT;
