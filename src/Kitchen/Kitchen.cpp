@@ -97,8 +97,11 @@ void Kitchen::handleReceptionCommand(Message &message) {
     int accepted = message.pizzaNumber;
     if (current + accepted > capacity)
         accepted = std::max(0, capacity - current);
-    for (int i = 0; i < accepted; i++)
-        _pizzaQueue.push_back(*recipe);
+    for (int i = 0; i < accepted; i++) {
+        PizzaRecipe r = *recipe;
+        r.orderId = message.orderId;
+        _pizzaQueue.push_back(r);
+    }
     _busyMutex.unlock();
     _pizzaQueueMutex.unlock();
 

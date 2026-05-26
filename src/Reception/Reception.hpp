@@ -20,9 +20,16 @@ class Reception {
     int cook_per_chicken = 0;
     int time_to_replace_ingredients = 0;
 
+    struct OrderRecord {
+        std::string description;
+        int remaining;
+    };
+
     std::queue<pid_t>_pendingKitchens;
     std::map<pid_t, Internal::Process> _pendingPrecesses;
     std::map<pid_t, KitchenHandle> kitchens;
+    std::map<uint32_t, OrderRecord> _orderTracking;
+    uint32_t _nextOrderId = 1;
     Internal::Socket _serverSocket;
     Internal::Poller poller;
     std::string commandBuffer;
@@ -47,4 +54,5 @@ public:
     void removeClosedKitchen(int fd, pid_t pid);
     void enqueueOrder(const Message& order);
     void broadcastStatus();
+    uint32_t createOrder(const std::string& description, int count);
 };

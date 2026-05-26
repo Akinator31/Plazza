@@ -33,6 +33,7 @@ struct Message {
     PizzaType pizzaType;
     PizzaSize pizzaSize;
     uint8_t pizzaNumber;
+    uint32_t orderId = 0;
 };
 
 enum class IngredientType {
@@ -63,6 +64,7 @@ struct PizzaRecipe {
     PizzaType type;
     std::vector<Ingredient> ingredients;
     uint32_t cookingTime;
+    uint32_t orderId = 0;
     bool hasEnoughIngredients(const Stock &stock) const {
         for (const auto &ingredient : ingredients) {
             if (stock.find(ingredient.type) == stock.end() || stock.at(ingredient.type) < ingredient.quantity)

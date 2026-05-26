@@ -129,8 +129,15 @@ void Reception::readKitchenMessages(const pid_t pid) {
 
     this->kitchens.at(pid).ipc >> extracted;
     if (extracted.type == MessageType::Done) {
-        std::cout << "Pizza terminé" << std::endl;
         this->kitchens.at(pid).notifyDone();
+        auto it = _orderTracking.find(extracted.orderId);
+        if (it != _orderTracking.end()) {
+            it->second.remaining--;
+            if (it->second.remaining <= 0) {
+                std::cout << "Order complete: " << it->second.description << std::endl;
+                _orderTracking.erase(it);
+            }
+        }
     } else if (extracted.type == MessageType::Status) {
         KitchenStatus status{};
         this->kitchens.at(pid).ipc >> status;
@@ -190,6 +197,12 @@ void Reception::removeClosedKitchen(const int fd, const pid_t pid) {
 
 void Reception::enqueueOrder(const Message& order) {
     _pendingOrders.push(order);
+}
+
+uint32_t Reception::createOrder(const std::string& description, const int count) {
+    const uint32_t id = _nextOrderId++;
+    _orderTracking[id] = {description, count};
+    return id;
 }
 
 void Reception::broadcastStatus() {
