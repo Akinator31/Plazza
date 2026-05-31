@@ -1,4 +1,4 @@
-PROJECT_NAME           = "NanoTekSpice"
+PROJECT_NAME           = "Plazza"
 INPUT                  = src/ include/ README.md
 RECURSIVE              = YES
 USE_MDFILE_AS_MAINPAGE = README.md
